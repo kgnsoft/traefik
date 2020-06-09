@@ -1,0 +1,9 @@
+---
+- name: Create a traefik docker network 
+  docker_network: 
+    name: proxy
+    state: present
+- name: start the network (proxy) service
+  docker_service: 
+    state: present
+

@@ -1,0 +1,54 @@
+logLevel = "INFO"
+
+defaultEntryPoints = ["http","https"]
+InsecureSkipVerify = true
+
+[api]
+dashboard = true
+entrypoint = "dashboard"
+
+[entryPoints]
+  [entryPoints.http]
+  address = ":80"
+     [entryPoints.http.redirect]
+        entryPoint = "https"
+
+  [entryPoints.https]
+    address = ":443" 
+  [entryPoints.https.tls]
+
+  [entryPoints.dashboard]
+  address = ":8080"
+    [entryPoints.dashboard.auth.basic]
+        #admin:secret23
+        users = ["admin:$apr1$62r6XfS8$EcZdBOm1Q0ZtaVI1kKbmz1"]
+    
+[file]
+  watch = true
+  filename = "/etc/traefik/rules.toml"
+ 
+
+[acme]
+  acmeLogging = true
+  email = "admin@ncds.uk"
+  storage = "/acme.json"
+
+#CA Server to running the test
+caServer = "https://acme-staging-v02.api.letsencrypt.org/directory"
+
+entryPoint = "https"
+  onHostRule = true
+
+  [acme.httpChallenge]
+  entryPoint = "http"
+
+  [acme.dnsChallenge]
+  provider = "route53"
+  delayBeforeCheck = 0
+  resolvers = ["1.1.1.1:53", "8.8.8.8:53"]
+    
+
+  [[acme.domains]]
+    main = "ib-proxy.np.ncds.uk"
+    sans = ["confluence.np.ncds.uk","jira.np.ncds.uk"]
+

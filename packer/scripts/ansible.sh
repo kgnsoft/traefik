@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+
+set -o errexit
+set -o pipefail
+set -o nounset
+
+sudo yum update -y
+
+#sudo yum install ansible -y
+sudo amazon-linux-extras install ansible2 -y
+
+

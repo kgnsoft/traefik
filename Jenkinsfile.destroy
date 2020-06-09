@@ -1,0 +1,40 @@
+def COLOR_MAP = ['SUCCESS': 'good', 'FAILURE': 'danger', 'UNSTABLE': 'danger', 'ABORTED': 'danger']
+
+pipeline {
+  agent any
+
+  options {
+    buildDiscarder(logRotator(numToKeepStr: '10', artifactNumToKeepStr: '10'))
+  }
+
+  environment {
+    TF_LOG = "TRACE"
+    TF_LOG_PATH = "terraform.log"
+  }
+
+  stages {
+    stage('UnDeploy') {
+      steps {
+        dir('terraform') {
+          lock('inbound-deploy') {
+             withCredentials([sshUserPrivateKey(credentialsId: "gitlab-ssh-jenkins", keyFileVariable: 'keyfile')]) {
+            sh """
+              export TARGET_KEY_ID=`aws kms list-aliases --region eu-west-2 | jq -r '.Aliases[] | select(.AliasName=="alias/s3") | .TargetKeyId'`
+              terraform12 init -backend-config "kms_key_id=\${TARGET_KEY_ID}"
+              terraform12 destroy -auto-approve
+            """
+          }
+        }
+      }
+    }
+  }
+  }
+  post {
+    always {
+      archiveArtifacts artifacts: 'terraform/terraform.log', fingerprint: true
+    // slackSend color: COLOR_MAP[currentBuild.currentResult],
+    //   message: "*${currentBuild.currentResult}:* Job ${env.JOB_NAME} build ${env.BUILD_NUMBER}\n More info at: ${env.BUILD_URL}"
+      cleanWs()
+    }
+  }
+}
